@@ -28,7 +28,7 @@ and blip variance.
 }
 \description{
 Function that gives inference for logistic regression plug-in
-estimators of ATE and Blip Variance.
+estimators of ATE and treatment effect function variance (VTE)
 }
 \examples{
 

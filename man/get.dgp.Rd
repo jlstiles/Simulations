@@ -21,30 +21,30 @@ get.dgp(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms,
 
 \item{depth, }{specify depth of interaction--must be less than or equal d.}
 
-\item{maxterms, }{maximum terms per interaction.  For example, this would limit 
+\item{maxterms, }{maximum terms per interaction.  For example, this would limit
 two way interactions to maximally 10 terms as well as three way or main terms.
 With high dimension it is wise to set this low because it might take a while
 otherwise.  Still in development--perhaps future will set this for each depth}
 
-\item{minterms}{sets a minimum number of total covariate terms, including 
+\item{minterms}{sets a minimum number of total covariate terms, including
 interactions with eachother--do not set lower than 1.}
 
 \item{mininters}{sets the minimum number of interactions with treatment to include
 This must be bigger or equal to minterms}
 
-\item{num.binaries}{specifies number of main terms you want as binaries, must be 
+\item{num.binaries}{specifies number of main terms you want as binaries, must be
 less than d.}
 
 \item{force.confounding}{forces variables used for p-score to overlap with those
 used for outcome regression.}
 
 \item{skewing}{randomly skews an otherwise centered dgp for generating binary treatment
-default is c(-1, 1).  Set to c(-5,-1) to deliberately skew more regularly or widen to 
+default is c(-1, 1).  Set to c(-5,-1) to deliberately skew more regularly or widen to
 c(-3, 3) to skew more randomly.}
 }
 \value{
 a sample DF, the true average treatment effect, ATE0 and blip variance
-BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample 
+BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample
 true prob of death under treatment, PQ1n, and prob of death under control
 PQ0n
 }

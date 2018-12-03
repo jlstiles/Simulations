@@ -30,12 +30,12 @@ model fit using clever covariate in your regression.  Set to TRUE for RCT's.}
 \item{parallelize}{FALSE by default (still in development)}
 }
 \value{
-a list with elements, CI for the confidence interval and  IC for the 
+a list with elements, CI for the confidence interval and  IC for the
 influence curve.
 }
 \description{
-computes delta method inferencec for logistic regression plug-in 
-estimator of treatment specific mean for survival data in wide form, 
+computes delta method inferencec for logistic regression plug-in
+estimator of treatment specific mean for survival data in wide form,
 including pt treatment. Also does logistic regression plug-in using clever
 covariate in the regression, inference computed using delta method as well.
 Note, in performing tmle, pscores are obtained via user supplied regression

@@ -22,8 +22,8 @@ bounds for both ATE and blip variance at level alpha. default is FALSE}
 }
 \value{
 if simultaneous.inference is specified as TRUE then will return a vector giving
-pt estimate, left and right bound for ATE, simultaneous ATE CI, blip variance, 
-and simultaneous blip variance.  Otherwise gives pt estimate, left and right bound for ATE
+pt estimate, left and right bound for ATE, simultaneous ATE CI, VTE, 
+and simultaneous VTE.  Otherwise gives pt estimate, left and right bound for ATE
 and blip variance.
 }
 \description{

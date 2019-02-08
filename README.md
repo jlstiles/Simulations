@@ -1,2 +1,2 @@
 # Simulations
-devtools::install.github("jlstiles/Simulations")
+devtools::install_github("jlstiles/Simulations")

@@ -31,7 +31,8 @@
 #' @export
 #' @example /inst/examples/example_get.dgp.R
 get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, minterms, 
-                   mininters, num.binaries = floor(d/4), force.confounding = TRUE, skewing = c(-1,1)) 
+                   mininters, num.binaries = floor(d/4), skewing = c(-1,1), 
+                   force.confounding = TRUE, limit_inter = NULL) 
 {
   # n = 1000; d = 2; pos = .01; minATE = -2; minBV = .03; depth = 2; maxterms = 2; minterms = 1; mininters = 1
   # num.binaries = 0; force.confounding = TRUE
@@ -78,12 +79,18 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   # than 5 2 way interactions or more than 5 8 way interactions, etc. and minterms makes 
   # sure we have a model of certain complexity minterms must be greater than equal 1
   s = -1
+  
   while (s < minterms) {
-    terms = lapply(choos, FUN = function(x) {
-      no.terms = sample(0:min(maxterms, ncol(x)),1)
+    no.terms = sample(0:min(maxterms, ncol(choos[[1]])),1)
+    select.cols = sample(1:ncol(choos[[1]]), no.terms)
+    terms = list()
+    terms[[1]] = select.cols
+    terms = append(terms, lapply(choos[2:length(choos)], FUN = function(x) {
+      if (!is.null(limit_inter)) L = min(limit_inter, ncol(x)) else L = ncol(x)
+      no.terms = sample(0:min(maxterms, L),1)
       select.cols = sample(1:ncol(x), no.terms)
       return(select.cols)
-    })
+    }))
     s = sum(unlist(lapply(terms, FUN = function(x) length(x))))
   }
   # combine specified columns as to randomly chosen interactions

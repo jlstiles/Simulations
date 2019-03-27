@@ -5,8 +5,8 @@
 \title{get.dgp}
 \usage{
 get.dgp(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms,
-  minterms, mininters, num.binaries = floor(d/4), force.confounding = TRUE,
-  skewing = c(-1, 1))
+  minterms, mininters, num.binaries = floor(d/4), skewing = c(-1, 1),
+  force.confounding = TRUE, limit_inter = NULL)
 }
 \arguments{
 \item{n, }{sample size}
@@ -35,12 +35,12 @@ This must be bigger or equal to minterms}
 \item{num.binaries}{specifies number of main terms you want as binaries, must be
 less than d.}
 
-\item{force.confounding}{forces variables used for p-score to overlap with those
-used for outcome regression.}
-
 \item{skewing}{randomly skews an otherwise centered dgp for generating binary treatment
 default is c(-1, 1).  Set to c(-5,-1) to deliberately skew more regularly or widen to
 c(-3, 3) to skew more randomly.}
+
+\item{force.confounding}{forces variables used for p-score to overlap with those
+used for outcome regression.}
 }
 \value{
 a sample DF, the true average treatment effect, ATE0 and blip variance
@@ -58,8 +58,9 @@ and maxterms parameters.
 # a minimum variance of blip of .03, up to 2 way interactions, limit positivity violations to less than 1\% of the
 # population having propensity scores below .05 or above .95, 1 binary, up to 1 interaction terms and at least 1
 # term included as a covariate in outcome regression and in treatment mechanism
-dgp = get.dgp(n = 1000, d = 3, pos = 0.05, minATE = .1, minBV = .03, depth = 2, maxterms = 3, minterms = 1, 
-              mininters = 1, num.binaries = 1) 
+debug(get.dgp)
+dgp = get.dgp(n = 1000, d = 13, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 30, minterms = 7, 
+              mininters = 7, num.binaries = 1, force.confounding = TRUE, limit_inter = NULL) 
 
 # population blip variance (VTE)
 dgp$BV0

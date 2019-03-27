@@ -2,8 +2,9 @@
 # a minimum variance of blip of .03, up to 2 way interactions, limit positivity violations to less than 1% of the
 # population having propensity scores below .05 or above .95, 1 binary, up to 1 interaction terms and at least 1
 # term included as a covariate in outcome regression and in treatment mechanism
-dgp = get.dgp(n = 1000, d = 3, pos = 0.05, minATE = .1, minBV = .03, depth = 2, maxterms = 3, minterms = 1, 
-              mininters = 1, num.binaries = 1) 
+undebug(get.dgp)
+dgp = get.dgp(n = 1000, d = 5, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 10, minterms = 1, 
+              mininters = 0, num.binaries = 2, force.confounding = TRUE, limit_inter = 5) 
 
 # population blip variance (VTE)
 dgp$BV0
@@ -22,7 +23,7 @@ head(dgp$DF)
 # histogram of blips
 hist(dgp$blip_n)
 # histogram of propensity scores
-hist(dgp$PGn)
+hist(dgp$PGn,50)
 
 
 ###

@@ -241,7 +241,7 @@ remakeDGP = function(n, object, limit_inter = NULL)
   An = A
   Yn = Y
   Wn = U_W
-  DF = cbind(Wn, An, Yn)
+  DF = as.data.frame(cbind(Wn, An, Yn))
   colnames(DF)[c((d + 1), (d + 2))] = c("A", "Y")
   colnames(DF)[1:d] = paste0("W",1:d)
   return(list(DF = DF, blip_n = blip_n, Wn = Wn,

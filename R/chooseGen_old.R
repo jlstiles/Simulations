@@ -28,7 +28,6 @@
 #' BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample 
 #' true prob of death under treatment, PQ1n, and prob of death under control
 #' PQ0n
-#' @export
 #' @example /inst/examples/example_get.dgp.R
 get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, minterms, 
                    mininters, num.binaries = floor(d/4), skewing = c(-1,1), 

@@ -101,3 +101,9 @@ gendata_noise=function(n, g0, Q0){
   Y=rbinom(n,1,Q0(A,W1,W2,W3,W4))
   data.frame(A,W1,W2,W3,W4,Y)
 }
+
+#' @export
+effect = function(n, dist, params) {
+  params = append(params, list(n = n))
+  do.call(dist, params)
+}

@@ -3,7 +3,7 @@
 # population having propensity scores below .05 or above .95, 1 binary, up to 1 interaction terms and at least 1
 # term included as a covariate in outcome regression and in treatment mechanism
 undebug(get.dgp)
-dgp = get.dgp(n = 1000, d = 5, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 10, minterms = 1, 
+dgp = get.dgp1(n = 1000, d = 5, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 10, minterms = 1, 
               mininters = 0, num.binaries = 2, force.confounding = TRUE, limit_inter = 5) 
 
 # population blip variance (VTE)
@@ -25,7 +25,7 @@ hist(dgp$blip_n)
 # histogram of propensity scores
 hist(dgp$PGn,50)
 
-
+dgp$
 ###
 # The following example is for pt treatment.  
 ###

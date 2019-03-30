@@ -57,8 +57,8 @@ and maxterms parameters.
 # population having propensity scores below .05 or above .95, 1 binary, up to 1 interaction terms and at least 1
 # term included as a covariate in outcome regression and in treatment mechanism
 debug(get.dgp1)
-dgp = get.dgp1(n = 1000, d = 10, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 10, minterms = 8, 
-              mininters = 8, num.binaries = 5, force.confounding = TRUE, limit_inter = NULL) 
+dgp = get.dgp1(n = 1000, d = 40, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 30, minterms = 20, 
+              mininters = 20, num.binaries = 20, force.confounding = TRUE, limit_inter = NULL) 
 
 dgp$terms_inter
 

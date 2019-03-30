@@ -2,8 +2,8 @@
 # a minimum variance of blip of .03, up to 2 way interactions, limit positivity violations to less than 1% of the
 # population having propensity scores below .05 or above .95, 1 binary, up to 1 interaction terms and at least 1
 # term included as a covariate in outcome regression and in treatment mechanism
-debug(get.dgp1)
-dgp = get.dgp1(n = 1000, d = 40, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 30, minterms = 20, 
+# undebug(get.dgp1)
+dgp = get.dgp(n = 1000, d = 40, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 30, minterms = 20, 
               mininters = 20, num.binaries = 20, force.confounding = TRUE, limit_inter = NULL) 
 
 dgp$terms_inter

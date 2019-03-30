@@ -4,7 +4,7 @@
 \alias{get.dgp}
 \title{get.dgp}
 \usage{
-get.dgp(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms,
+get.dgp(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms,
   minterms, mininters, num.binaries = floor(d/4), skewing = c(-1, 1),
   force.confounding = TRUE, limit_inter = NULL, forcedist = c(0.2, 0.2,
   0.2, 0.2, 0.2), Wdist = list(normal = list(dist = rnorm, params = list(mean

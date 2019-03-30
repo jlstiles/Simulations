@@ -123,9 +123,6 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
     return(c)
   })
   
-  head(f_A)
-  head(f_Y)
-  
   # types of transformations to apply, can add many more
 
   ##
@@ -384,7 +381,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   # max(PQ)
   # min(PQ)
   # 
-  PQ = pmin(pmax(PG0, .00001), 1-.00001)
+  PQ = pmin(pmax(PQ, .00001), 1-.00001)
   
   # hist(PQ)
   # take the draw for the population

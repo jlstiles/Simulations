@@ -1,5 +1,5 @@
 
-#' @title get.dgp
+#' @title get.dgp_old
 #' @description randomly creates a dgp and attempts to satisfy user specs. Number of covariates
 #' is not limited but may take a while beyond d = 20 with too many terms. Limit time with depth
 #' and maxterms parameters.

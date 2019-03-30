@@ -11,7 +11,7 @@ get.dgp(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms,
   = 0, sd = 1)), beta = list(dist = rbeta, params = list(shape1 = 2, shape2 =
   1)), beta = list(dist = rbeta, params = list(shape1 = 10, shape2 = 11)),
   chisquared = list(dist = rchisq, params = list(df = 1, ncp = 5)), uniform =
-  list(dist = runif, params = list(min = -1, max = 1))))
+  list(dist = runif, params = list(min = -1, max = 1))), N = 1e+06)
 }
 \arguments{
 \item{n, }{sample size}

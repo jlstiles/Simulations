@@ -39,7 +39,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
                                 beta = list(dist = rbeta, params = list(shape1= 2, shape2 = 1)),
                                 beta = list(dist = rbeta, params = list(shape1= 10, shape2 = 11)),
                                 chisquared = list(dist = rchisq, params = list(df = 1, ncp = 5)),
-                                uniform = list(dist = runif, params = list(min = -1, max = 1)))
+                                uniform = list(dist = runif, params = list(min = -1, max = 1))), N = 1e6
 ) 
 {
   # n = 1000; d = 4; pos = .01; minATE = -2; minBV = .03; depth = 2; maxterms = 2; minterms = 1; mininters = 1
@@ -50,7 +50,6 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
     stop("minimum number of interactions cannot exceed number of covariate terms, obviously, hello!!!")
   
   # sample size of population
-  N = 1e+06
   
   # hist(rbeta(1000, 10,11))
   # mean(rbeta(1000,10,11))

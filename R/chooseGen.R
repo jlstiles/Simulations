@@ -24,18 +24,26 @@
 #' @param skewing randomly skews an otherwise centered dgp for generating binary treatment
 #' default is c(-1, 1).  Set to c(-5,-1) to deliberately skew more regularly or widen to 
 #' c(-3, 3) to skew more randomly.
+#' @param forcedist Can be used for specifying the prob of drawing a dist in Wdist
+#' @param Wdist These are dist for generating W's  
 #' @return  a sample DF, the true average treatment effect, ATE0 and blip variance
 #' BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample 
 #' true prob of death under treatment, PQ1n, and prob of death under control
 #' PQ0n
 #' @export
 #' @example /inst/examples/example_get.dgp.R
-get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, minterms, 
+get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, minterms, 
                    mininters, num.binaries = floor(d/4), skewing = c(-1,1), 
-                   force.confounding = TRUE, limit_inter = NULL) 
+                   force.confounding = TRUE, limit_inter = NULL, forcedist = c(.2,.2,.2,.2,.2),
+                   Wdist = list(normal = list(dist = rnorm, params = list(mean = 0, sd = 1)),
+                                beta = list(dist = rbeta, params = list(shape1= 2, shape2 = 1)),
+                                beta = list(dist = rbeta, params = list(shape1= 10, shape2 = 11)),
+                                chisquared = list(dist = rchisq, params = list(df = 1, ncp = 5)),
+                                uniform = list(dist = runif, params = list(min = -1, max = 1)))
+) 
 {
-  # n = 1000; d = 2; pos = .01; minATE = -2; minBV = .03; depth = 2; maxterms = 2; minterms = 1; mininters = 1
-  # num.binaries = 0; force.confounding = TRUE
+  # n = 1000; d = 4; pos = .01; minATE = -2; minBV = .03; depth = 2; maxterms = 2; minterms = 1; mininters = 1
+  # num.binaries = 2; force.confounding = TRUE
   if (minterms == 0) 
     stop("minterms must be atleast 1")
   if (mininters > minterms) 
@@ -44,18 +52,68 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   # sample size of population
   N = 1e+06
   
-  # randomly drawn binary distributions on random columns, cols don't need to be random here
-  poss.binaries = sample(1:d, num.binaries)
-  r = runif(num.binaries, 0.3, 0.7)
+  # hist(rbeta(1000, 10,11))
+  # mean(rbeta(1000,10,11))
+  # 
+  # hist(rchisq(1000, 1,5), 100)
+  # mean(rchisq(1000,1,5))
   
+  # randomly drawn binary distributions on random columns, cols don't need to be random here
+  r = runif(num.binaries, 0.3, 0.7)
+  Wdist_bin = lapply(r, FUN = function(x) list(dist = rbinom, params = list(size = 1, prob = x)))
   # the population matrix of potential confounders, consisting of normals and binaries
-  Wmat = vapply(1:d, FUN = function(col) {
+  types = list(function(x) sin(x), function(x) cos(x), 
+               function(x) x^2, function(x) x, function(x) x^3, function(x) exp(x))
+  
+  no.types = length(types)
+  
+   # Create the W matrix
+  Wmat = lapply(1:d, FUN = function(col) {
     if (col <= num.binaries) {
-      return(rbinom(N, 1, r[col]))
+      W = rbinom(N, 1, r[col])
+      i = col
+      return(list(W, dist=i))
     } else {
-      return(rnorm(N, 0, 1))
+      i = which(rmultinom(1,1,forcedist)==1)
+      W = effect(N, dist = Wdist[[i]]$dist, params = Wdist[[i]]$params)
+      return(list(W, dist=i))
     }
-  }, FUN.VALUE = rep(1,N))
+  })
+  
+  U_W = do.call(cbind, lapply(Wmat, FUN = function(x) x[[1]]))
+  U_Wdist = append(Wdist_bin, lapply(Wmat[(num.binaries+1):d], FUN = function(x) Wdist[x[[2]]][[1]]))
+  
+  # select the fcn of W for g
+  Wmat_g = lapply(1:d, FUN = function(col) {
+    if (col <= num.binaries) {
+      return(list(U_W[,col], "none-binary"))
+    } else {
+      fcn = types[[sample(1:no.types, 1)]]
+      v = fcn(U_W[,col])
+      return(list(v, fcn))
+    }
+  })
+
+  f_A = do.call(cbind, lapply(Wmat_g, FUN = function(x) x[[1]]))
+  f_Aforms = lapply(Wmat_g, FUN = function(x) x[[2]])
+  
+  Wmat_Q = lapply(1:d, FUN = function(col) {
+    if (col <= num.binaries) {
+      return(list(U_W[,col], "none-binary"))
+    } else {
+      if (force.confounding) {
+        fcn = f_Aforms[[col]]
+        v = fcn(U_W[,col])
+        return(list(v, fcn))} else {
+        fcn = types[[sample(1:no.types, 1)]]
+        v = fcn(U_W[,col])
+        return(list(v, fcn))
+      }
+    }
+  })
+  
+  f_Y = do.call(cbind, lapply(Wmat_Q, FUN = function(x) x[[1]]))
+  f_Yforms = lapply(Wmat_Q, FUN = function(x) x[[2]])
   
   # All of the interaction combos of columns possible up to the depth of interaction
   # user specifies
@@ -65,11 +123,11 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
     return(c)
   })
   
-  # types of transformations to apply, can add many more
-  types = list(function(x) sin(x), function(x) cos(x), 
-               function(x) x^2, function(x) x, function(x) x^3, function(x) exp(x))
+  head(f_A)
+  head(f_Y)
   
-  no.types = length(types)
+  # types of transformations to apply, can add many more
+
   ##
   # begin p-score construction for population
   ##
@@ -102,7 +160,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
       df = vapply(col.choos, FUN = function(x) {
         col.inds = choos[[a]][,x]
         v = rep(1, N)
-        for (c in col.inds) v = v*Wmat[,c]
+        for (c in col.inds) v = v*f_A[,c]
         return(v)
       }, FUN.VALUE = rep(1, N))
       return(df)
@@ -116,19 +174,17 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   # so no variable dominates unnecessarily
   dfG = apply(dfG, 2, FUN = function(col) {
     if (all(col == 1 | col ==0)) {
-      v = (col - mean(col))/sd(col)
+      v = col
       return(v)
     } else {
-      v = types[[sample(1:no.types, 1)]](col)
-      v = (v - mean(v))/sd(v)
+      v = (col - mean(col))/sd(col)
       return(v)
     }
   })
   
-  # create an intercept for skewing deliberately
   skewage = runif(1, skewing[1], skewing[2])  
   dfG = cbind(dfG, rep(1, N))
-  coef_G = c(runif(ncol(dfG)-1, -1, 1), skewage)
+  coef_G = c(runif(ncol(dfG)-1, -1, 1))
   
   # satisfying positivity constraints, we don't want too high a percentage beyond
   # the user specified positivity probs of pos and 1-pos. Since .8^20 is small we
@@ -136,7 +192,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   tol = TRUE
   its = 0
   while (tol & its < 20) {
-    PG0 = plogis(dfG %*% coef_G)
+    PG0 = plogis(dfG %*% c(coef_G, skewage))
     coef_G = 0.8 * coef_G
     its = its + 1
     tol = mean(PG0 < pos) > 0.01 | mean(PG0 > (1 - pos)) > 
@@ -144,7 +200,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   }
   
   # Creating A  based on p-scores for whole population of 1e6
-  PG0 = gentmle2::truncate(PG0, pos)
+  PG0 = pmin(pmax(PG0, pos), 1-pos)
   # hist(PG0, breaks = 100)
   A = rbinom(N, 1, PG0)
   
@@ -199,7 +255,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
       df = vapply(col.choos, FUN = function(x) {
         col.inds = choos[[a]][,x]
         v = rep(1, N)
-        for (c in col.inds) v = v*Wmat[,c]
+        for (c in col.inds) v = v*f_Y[,c]
         return(v)
       }, FUN.VALUE = rep(1, N))
       return(df)
@@ -216,7 +272,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
       df = vapply(col.choos, FUN = function(x) {
         col.inds = choos[[a]][,x]
         v = rep(1, N)
-        for (c in col.inds) v = v*Wmat[,c]
+        for (c in col.inds) v = v*f_Y[,c]
         return(v)
       }, FUN.VALUE = rep(1, N))
       return(df)
@@ -235,11 +291,10 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   # OC df cols for W interactions and A plugged into randomly drawn functions (types)
   dfQWA = apply(dfQWA, 2, FUN = function(col) {
     if (all(col == 1 | col ==0)) {
-      v = (col - mean(col))/sd(col)
-      return(v)
+      return(col)
     } else {
-      v = types[[sample(1:no.types, 1)]](col)
-      v = (v - mean(v))/sd(v)
+      # v = types[[sample(1:no.types, 1)]](col)
+      v = (col - mean(col))/sd(col)
       return(v)
     }
   })
@@ -248,20 +303,8 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   no.inters = sum(unlist(lapply(terms_inter, sum)))
   
   if (no.inters != 0) {
-    # These are the randomly drawn fcns for the interactions with A
-    ftypes = lapply(1:ncol(dfQ_interA), FUN = function(col) {
-      if (all(dfQ_interA[,col] == 1 | dfQ_interA[,col] ==0)) {
-        return(types[[4]])
-      } else {
-        v = types[[sample(1:no.types, 1)]]
-        return(v)
-      }
-    })
-    
-    # apply the fcns as per setting A to its draw, A =1 and A=0
-    dfQ_interA = vapply(1:length(ftypes), FUN = function(col) ftypes[[col]](dfQ_interA[,col]), FUN.VALUE = rep(1,N))
-    dfQ_inter = vapply(1:length(ftypes), FUN = function(col) ftypes[[col]](dfQ_inter[,col]), FUN.VALUE = rep(1,N))
-    dfQ_inter0 = vapply(1:length(ftypes), FUN = function(col) ftypes[[col]](rep(0,N)), FUN.VALUE = rep(1,N))
+
+    dfQ_inter0 = vapply(1:ncol(dfQ_interA), FUN = function(col) rep(0,N), FUN.VALUE = rep(1,N))
     
     # We standardize these columns too for the population as is
     means = apply(dfQ_interA, 2, FUN = function(col) mean(col))
@@ -341,7 +384,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   # max(PQ)
   # min(PQ)
   # 
-  PQ = gentmle2::truncate(PQ, .00001)
+  PQ = pmin(pmax(PG0, .00001), 1-.00001)
   
   # hist(PQ)
   # take the draw for the population
@@ -360,11 +403,14 @@ get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, mi
   blip_n = PQ1n - PQ0n
   An = A[S]
   Yn = Y[S]
-  Wn = as.data.frame(Wmat[S, ])
+  Wn = as.data.frame(U_W[S, ])
   DF = cbind(Wn, An, Yn)
   colnames(DF)[c((d + 1), (d + 2))] = c("A", "Y")
   colnames(DF)[1:d] = paste0("W",1:d)
   return(list(BV0 = BV0, ATE0 = ATE0, DF = DF, blip_n = blip_n, 
-              PQ1n = PQ1n, PQ0n = PQ0n, PQn = PQn, PGn = PGn))
+              PQ1n = PQ1n, PQ0n = PQ0n, PQn = PQn, PGn = PGn, U_Wdist = U_Wdist,
+              f_Aforms = f_Aforms, f_Yforms = f_Yforms, terms = terms, skewage = skewage, its = its,
+            termsQW = termsQW, terms_inter = terms_inter, coef_Q = coef_Q, coef_G = coef_G,
+            d = d, num.binaries = num.binaries, depth = depth, pos = pos))
 }
 

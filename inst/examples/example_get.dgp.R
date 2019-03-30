@@ -2,9 +2,11 @@
 # a minimum variance of blip of .03, up to 2 way interactions, limit positivity violations to less than 1% of the
 # population having propensity scores below .05 or above .95, 1 binary, up to 1 interaction terms and at least 1
 # term included as a covariate in outcome regression and in treatment mechanism
-undebug(get.dgp)
-dgp = get.dgp1(n = 1000, d = 5, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 10, minterms = 1, 
-              mininters = 0, num.binaries = 2, force.confounding = TRUE, limit_inter = 5) 
+debug(get.dgp1)
+dgp = get.dgp1(n = 1000, d = 40, pos = 0.05, minATE = 0, minBV = 0, depth = 4, maxterms = 30, minterms = 20, 
+              mininters = 20, num.binaries = 20, force.confounding = TRUE, limit_inter = NULL) 
+
+dgp$terms_inter
 
 # population blip variance (VTE)
 dgp$BV0
@@ -21,11 +23,17 @@ max(dgp$PGn)
 # sample dataframe
 head(dgp$DF)
 # histogram of blips
-hist(dgp$blip_n)
+dgp1 = remakeDGP(n=1000, dgp)
+hist(dgp$blip_n,50)
+hist(dgp1$blip_n,50)
 # histogram of propensity scores
-hist(dgp$PGn,50)
 
-dgp$
+hist(dgp$PGn,50)
+hist(dgp1$PGn,50)
+
+dgp$coef_G
+dgp$coef_Q
+  
 ###
 # The following example is for pt treatment.  
 ###

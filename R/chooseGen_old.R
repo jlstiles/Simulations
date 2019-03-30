@@ -30,12 +30,12 @@
 #' PQ0n
 #' @export
 #' @example /inst/examples/example_get.dgp.R
-get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, minterms, 
+get.dgp = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, minterms, 
                    mininters, num.binaries = floor(d/4), skewing = c(-1,1), 
                    force.confounding = TRUE, limit_inter = NULL) 
 {
-  n = 1000; d = 4; pos = .01; minATE = -2; minBV = .03; depth = 2; maxterms = 2; minterms = 1; mininters = 1
-  num.binaries = 2; force.confounding = TRUE
+  # n = 1000; d = 2; pos = .01; minATE = -2; minBV = .03; depth = 2; maxterms = 2; minterms = 1; mininters = 1
+  # num.binaries = 0; force.confounding = TRUE
   if (minterms == 0) 
     stop("minterms must be atleast 1")
   if (mininters > minterms) 
@@ -44,70 +44,18 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
   # sample size of population
   N = 1e+06
   
-  # hist(rbeta(1000, 10,11))
-  # mean(rbeta(1000,10,11))
-  # 
-  # hist(rchisq(1000, 1,5), 100)
-  # mean(rchisq(1000,1,5))
-  
-  Wdist = list(normal = list(dist = rnorm, params = list(mean = 0, sd = 1)),
-                beta = list(dist = rbeta, params = list(shape1= 2, shape2 = 1)),
-                beta = list(dist = rbeta, params = list(shape1= 10, shape2 = 11)),
-                chisquared = list(dist = rchisq, params = list(df = 1, ncp = 5)),
-                uniform = list(dist = runif, params = list(min = -1, max = 1)))
-                
   # randomly drawn binary distributions on random columns, cols don't need to be random here
+  poss.binaries = sample(1:d, num.binaries)
   r = runif(num.binaries, 0.3, 0.7)
-  Wdist_bin = lapply(r, FUN = function(x) list(dist = rbinom, params = list(size = 1, prob = x)))
+  
   # the population matrix of potential confounders, consisting of normals and binaries
-  types = list(function(x) sin(x), function(x) cos(x), 
-               function(x) x^2, function(x) x, function(x) x^3, function(x) exp(x))
-  
-  no.types = length(types)
-  
-   # Create the W matrix
-  Wmat = lapply(1:d, FUN = function(col) {
+  Wmat = vapply(1:d, FUN = function(col) {
     if (col <= num.binaries) {
-      W = rbinom(N, 1, r[col])
-      i = col
-      return(list(W, dist=i))
+      return(rbinom(N, 1, r[col]))
     } else {
-      i = sample(1:length(Wdist),1)
-      W = effect(N, dist = Wdist[[i]]$dist, params = Wdist[[i]]$params)
-      return(list(W, dist=i))
+      return(rnorm(N, 0, 1))
     }
-  })
-  
-  U_W = do.call(cbind, lapply(Wmat, FUN = function(x) x[[1]]))
-  U_Wdist = append(Wdist_bin, lapply(Wmat[(num.binaries+1):d], FUN = function(x) Wdist[x[[2]]]))
-  
-  # select the fcn of W for g
-  Wmat_g = lapply(1:d, FUN = function(col) {
-    if (col <= num.binaries) {
-      return(list(U_W[,col], "none-binary"))
-    } else {
-      fcn = types[[sample(1:no.types, 1)]]
-      v = fcn(U_W[,col])
-      return(list(v, fcn))
-    }
-  })
-
-  f_A = do.call(cbind, lapply(Wmat_g, FUN = function(x) x[[1]]))
-  f_Aforms = lapply(Wmat_g, FUN = function(x) x[[2]])
-  
-  Wmat_Q = lapply(1:d, FUN = function(col) {
-    if (col <= num.binaries) {
-      return(list(U_W[,col], "none-binary"))
-    } else {
-      if (force.confounding) {
-      v = f_Aforms[[col]](U_W[,col])
-      } else v = types[[sample(1:no.types, 1)]](U_W[,col])
-      return(list(v, types[[sample(1:no.types, 1)]]))
-    }
-  })
-  
-  f_Y = do.call(cbind, lapply(Wmat_Q, FUN = function(x) x[[1]]))
-  f_Yforms = do.call(cbind, lapply(Wmat_Q, FUN = function(x) x[[2]]))
+  }, FUN.VALUE = rep(1,N))
   
   # All of the interaction combos of columns possible up to the depth of interaction
   # user specifies
@@ -117,11 +65,11 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
     return(c)
   })
   
-  head(f_A)
-  head(f_Y)
-  
   # types of transformations to apply, can add many more
-
+  types = list(function(x) sin(x), function(x) cos(x), 
+               function(x) x^2, function(x) x, function(x) x^3, function(x) exp(x))
+  
+  no.types = length(types)
   ##
   # begin p-score construction for population
   ##
@@ -154,7 +102,7 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
       df = vapply(col.choos, FUN = function(x) {
         col.inds = choos[[a]][,x]
         v = rep(1, N)
-        for (c in col.inds) v = v*f_A[,c]
+        for (c in col.inds) v = v*Wmat[,c]
         return(v)
       }, FUN.VALUE = rep(1, N))
       return(df)
@@ -168,10 +116,11 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
   # so no variable dominates unnecessarily
   dfG = apply(dfG, 2, FUN = function(col) {
     if (all(col == 1 | col ==0)) {
-      v = col
+      v = (col - mean(col))/sd(col)
       return(v)
     } else {
-      v = (col - mean(col))/sd(col)
+      v = types[[sample(1:no.types, 1)]](col)
+      v = (v - mean(v))/sd(v)
       return(v)
     }
   })
@@ -195,7 +144,7 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
   }
   
   # Creating A  based on p-scores for whole population of 1e6
-  PG0 = pmin(pmax(PG0, pos), 1-pos)
+  PG0 = gentmle2::truncate(PG0, pos)
   # hist(PG0, breaks = 100)
   A = rbinom(N, 1, PG0)
   
@@ -250,7 +199,7 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
       df = vapply(col.choos, FUN = function(x) {
         col.inds = choos[[a]][,x]
         v = rep(1, N)
-        for (c in col.inds) v = v*f_Y[,c]
+        for (c in col.inds) v = v*Wmat[,c]
         return(v)
       }, FUN.VALUE = rep(1, N))
       return(df)
@@ -267,7 +216,7 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
       df = vapply(col.choos, FUN = function(x) {
         col.inds = choos[[a]][,x]
         v = rep(1, N)
-        for (c in col.inds) v = v*f_Y[,c]
+        for (c in col.inds) v = v*Wmat[,c]
         return(v)
       }, FUN.VALUE = rep(1, N))
       return(df)
@@ -286,10 +235,11 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
   # OC df cols for W interactions and A plugged into randomly drawn functions (types)
   dfQWA = apply(dfQWA, 2, FUN = function(col) {
     if (all(col == 1 | col ==0)) {
-      return(col)
-    } else {
-      # v = types[[sample(1:no.types, 1)]](col)
       v = (col - mean(col))/sd(col)
+      return(v)
+    } else {
+      v = types[[sample(1:no.types, 1)]](col)
+      v = (v - mean(v))/sd(v)
       return(v)
     }
   })
@@ -410,12 +360,11 @@ get.dgp1 = function(n, d, pos = 0.01, minATE = -2, minBV = 0, depth, maxterms, m
   blip_n = PQ1n - PQ0n
   An = A[S]
   Yn = Y[S]
-  Wn = as.data.frame(U_W[S, ])
+  Wn = as.data.frame(Wmat[S, ])
   DF = cbind(Wn, An, Yn)
   colnames(DF)[c((d + 1), (d + 2))] = c("A", "Y")
   colnames(DF)[1:d] = paste0("W",1:d)
   return(list(BV0 = BV0, ATE0 = ATE0, DF = DF, blip_n = blip_n, 
-              PQ1n = PQ1n, PQ0n = PQ0n, PQn = PQn, PGn = PGn, U_Wdist = U_Wdist,
-              f_Aforms = f_Aforms, f_Yforms = f_Yforms))
+              PQ1n = PQ1n, PQ0n = PQ0n, PQn = PQn, PGn = PGn))
 }
 

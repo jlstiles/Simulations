@@ -107,3 +107,10 @@ effect = function(n, dist, params) {
   params = append(params, list(n = n))
   do.call(dist, params)
 }
+
+#' @export
+linear = function(x) x
+#' @export
+squared = function(x) x^2
+#' @export
+cubic = function(x) x^3

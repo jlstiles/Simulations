@@ -7,7 +7,7 @@
 #' @param d, dimension of potential confounders
 #' @param pos, a small value to make sure prop scores are in (pos, 1 - pos)
 #' @param minATE, minimum causal risk difference for the population.  
-#' @param minBV, minimum blip variance for population
+#' @param minBV, minimum TE variance for population
 #' @param depth, specify depth of interaction--must be less than or equal d.  
 #' @param maxterms, maximum terms per interaction.  For example, this would limit 
 #' two way interactions to maximally 10 terms as well as three way or main terms.
@@ -24,8 +24,8 @@
 #' @param skewing randomly skews an otherwise centered dgp for generating binary treatment
 #' default is c(-1, 1).  Set to c(-5,-1) to deliberately skew more regularly or widen to 
 #' c(-3, 3) to skew more randomly.
-#' @return  a sample DF, the true average treatment effect, ATE0 and blip variance
-#' BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample 
+#' @return  a sample DF, the true average treatment effect, ATE0 and TE variance
+#' BV0, the sample pscores, PGn, the sample true TEs, TE_n, the sample 
 #' true prob of death under treatment, PQ1n, and prob of death under control
 #' PQ0n
 #' @export
@@ -63,14 +63,14 @@ remakeDGP = function(n, object, limit_inter = NULL)
   
   f_A = lapply(1:length(f_Aforms), FUN = function(x) {
     if (x<=num.binaries) return(Wmat[[x]]) else {
-      return(f_Aforms[[x]](Wmat[[x]]))
+      return(do.call(f_Aforms[[x]], list(x=Wmat[[x]])))
     }})
                     
   f_A = do.call(cbind, f_A)
   
   f_Y = lapply(1:length(f_Aforms), FUN = function(x) {
     if (x<=num.binaries) return(Wmat[[x]]) else {
-      return(f_Yforms[[x]](Wmat[[x]]))
+      return(do.call(f_Yforms[[x]], list(x=Wmat[[x]])))
     }})
   
   f_Y = do.call(cbind, f_Y)
@@ -220,9 +220,9 @@ remakeDGP = function(n, object, limit_inter = NULL)
   # compute true probs under A = 1 and A = 0 and related truths
   PQ1 = plogis(dfQ1 %*% coef_Q)
   PQ0 = plogis(dfQ0 %*% coef_Q)
-  blip_true = PQ1 - PQ0
-  ATE0 = mean(blip_true)
-  BV0 = var(blip_true)
+  TE_true = PQ1 - PQ0
+  ATE0 = mean(TE_true)
+  BV0 = var(TE_true)
   
   # finally we create the population probs of death
   PQ = plogis(dfQ %*% coef_Q)
@@ -234,17 +234,17 @@ remakeDGP = function(n, object, limit_inter = NULL)
   # make sure our loglikelihood loss is bounded reasonably, no one gets super lucky or unlucky!
   # mean(Y*A/PG0-Y*(1-A)/(1-PG0))
   # ATE0
-  # take a sample of size n and return sample probs blips, the dataframe 
+  # take a sample of size n and return sample probs TEs, the dataframe 
   # with covariates but the user never sees the formula. Now they can use DF
   # to try and recover the truth
-  blip_n = PQ1 - PQ0
+  TE_n = PQ1 - PQ0
   An = A
   Yn = Y
   Wn = U_W
   DF = as.data.frame(cbind(Wn, An, Yn))
   colnames(DF)[c((d + 1), (d + 2))] = c("A", "Y")
   colnames(DF)[1:d] = paste0("W",1:d)
-  return(list(DF = DF, blip_n = blip_n, Wn = Wn,
+  return(list(DF = DF, TE_n = TE_n, Wn = Wn,
               PQ1n = PQ1, PQ0n = PQ0, PQn = PQ, PGn = PG))
 }
 

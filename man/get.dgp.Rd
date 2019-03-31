@@ -4,14 +4,16 @@
 \alias{get.dgp}
 \title{get.dgp}
 \usage{
-get.dgp(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms,
+get.dgp(n, d, pos = 0.01, minATE0 = 0, minVTE0 = 0, depth, maxterms,
   minterms, mininters, num.binaries = floor(d/4), skewing = c(-1, 1),
   force.confounding = TRUE, limit_inter = NULL, forcedist = c(0.2, 0.2,
-  0.2, 0.2, 0.2), Wdist = list(normal = list(dist = rnorm, params = list(mean
-  = 0, sd = 1)), beta = list(dist = rbeta, params = list(shape1 = 2, shape2 =
-  1)), beta = list(dist = rbeta, params = list(shape1 = 10, shape2 = 11)),
-  chisquared = list(dist = rchisq, params = list(df = 1, ncp = 5)), uniform =
-  list(dist = runif, params = list(min = -1, max = 1))), N = 1e+06)
+  0.2, 0.2, 0.2), Wdist = list(normal = list(dist = "rnorm", params =
+  list(mean = 0, sd = 1)), beta = list(dist = "rbeta", params = list(shape1 = 2,
+  shape2 = 1)), beta = list(dist = "rbeta", params = list(shape1 = 10, shape2 =
+  11)), chisquared = list(dist = "rchisq", params = list(df = 1, ncp = 5)),
+  uniform = list(dist = "runif", params = list(min = -1, max = 1))),
+  types = list("sin", "cos", "linear", "squared", "cubic", "exp"),
+  N = 1e+06)
 }
 \arguments{
 \item{n, }{sample size}
@@ -19,10 +21,6 @@ get.dgp(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms,
 \item{d, }{dimension of potential confounders}
 
 \item{pos, }{a small value to make sure prop scores are in (pos, 1 - pos)}
-
-\item{minATE, }{minimum causal risk difference for the population.}
-
-\item{minBV, }{minimum blip variance for population}
 
 \item{depth, }{specify depth of interaction--must be less than or equal d.}
 
@@ -50,10 +48,14 @@ used for outcome regression.}
 \item{forcedist}{Can be used for specifying the prob of drawing a dist in Wdist}
 
 \item{Wdist}{These are dist for generating W's}
+
+\item{minATE, }{minimum causal risk difference for the population.}
+
+\item{minBV, }{minimum TE variance for population}
 }
 \value{
-a sample DF, the true average treatment effect, ATE0 and blip variance
-BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample
+a sample DF, the true average treatment effect, ATE0 and TE variance
+BV0, the sample pscores, PGn, the sample true TEs, TE_n, the sample
 true prob of death under treatment, PQ1n, and prob of death under control
 PQ0n
 }

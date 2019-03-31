@@ -7,7 +7,7 @@
 #' @param d, dimension of potential confounders
 #' @param pos, a small value to make sure prop scores are in (pos, 1 - pos)
 #' @param minATE, minimum causal risk difference for the population.  
-#' @param minBV, minimum blip variance for population
+#' @param minBV, minimum TE variance for population
 #' @param depth, specify depth of interaction--must be less than or equal d.  
 #' @param maxterms, maximum terms per interaction.  For example, this would limit 
 #' two way interactions to maximally 10 terms as well as three way or main terms.
@@ -26,20 +26,22 @@
 #' c(-3, 3) to skew more randomly.
 #' @param forcedist Can be used for specifying the prob of drawing a dist in Wdist
 #' @param Wdist These are dist for generating W's  
-#' @return  a sample DF, the true average treatment effect, ATE0 and blip variance
-#' BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample 
+#' @return  a sample DF, the true average treatment effect, ATE0 and TE variance
+#' BV0, the sample pscores, PGn, the sample true TEs, TE_n, the sample 
 #' true prob of death under treatment, PQ1n, and prob of death under control
 #' PQ0n
 #' @export
 #' @example /inst/examples/example_get.dgp.R
-get.dgp = function(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms, minterms, 
+get.dgp = function(n, d, pos = 0.01, minATE0 = 0, minVTE0 = 0, depth, maxterms, minterms, 
                    mininters, num.binaries = floor(d/4), skewing = c(-1,1), 
                    force.confounding = TRUE, limit_inter = NULL, forcedist = c(.2,.2,.2,.2,.2),
-                   Wdist = list(normal = list(dist = rnorm, params = list(mean = 0, sd = 1)),
-                                beta = list(dist = rbeta, params = list(shape1= 2, shape2 = 1)),
-                                beta = list(dist = rbeta, params = list(shape1= 10, shape2 = 11)),
-                                chisquared = list(dist = rchisq, params = list(df = 1, ncp = 5)),
-                                uniform = list(dist = runif, params = list(min = -1, max = 1))), N = 1e6
+                   Wdist = list(normal = list(dist = "rnorm", params = list(mean = 0, sd = 1)),
+                                beta = list(dist = "rbeta", params = list(shape1= 2, shape2 = 1)),
+                                beta = list(dist = "rbeta", params = list(shape1= 10, shape2 = 11)),
+                                chisquared = list(dist = "rchisq", params = list(df = 1, ncp = 5)),
+                                uniform = list(dist = "runif", params = list(min = -1, max = 1))),
+                   types = list("sin", "cos","linear", "squared", "cubic",
+                                "exp"), N = 1e6
 ) 
 {
   # n = 1000; d = 4; pos = .01; minATE = -2; minBV = .03; depth = 2; maxterms = 2; minterms = 1; mininters = 1
@@ -59,11 +61,9 @@ get.dgp = function(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms, min
   
   # randomly drawn binary distributions on random columns, cols don't need to be random here
   r = runif(num.binaries, 0.3, 0.7)
-  Wdist_bin = lapply(r, FUN = function(x) list(dist = rbinom, params = list(size = 1, prob = x)))
+  Wdist_bin = lapply(r, FUN = function(x) list(dist = "rbinom", params = list(size = 1, prob = x)))
   # the population matrix of potential confounders, consisting of normals and binaries
-  types = list(function(x) sin(x), function(x) cos(x), 
-               function(x) x^2, function(x) x, function(x) x^3, function(x) exp(x))
-  
+
   no.types = length(types)
   
    # Create the W matrix
@@ -88,7 +88,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms, min
       return(list(U_W[,col], "none-binary"))
     } else {
       fcn = types[[sample(1:no.types, 1)]]
-      v = fcn(U_W[,col])
+      v = do.call(fcn, list(x = U_W[,col]))
       return(list(v, fcn))
     }
   })
@@ -102,10 +102,10 @@ get.dgp = function(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms, min
     } else {
       if (force.confounding) {
         fcn = f_Aforms[[col]]
-        v = fcn(U_W[,col])
+        v = do.call(fcn, list(x = U_W[,col]))
         return(list(v, fcn))} else {
-        fcn = types[[sample(1:no.types, 1)]]
-        v = fcn(U_W[,col])
+          fcn = types[[sample(1:no.types, 1)]]
+          v = do.call(fcn, list(x = U_W[,col]))
         return(list(v, fcn))
       }
     }
@@ -346,35 +346,35 @@ get.dgp = function(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms, min
   # compute true probs under A = 1 and A = 0 and related truths
   PQ1 = plogis(dfQ1 %*% coef_Q)
   PQ0 = plogis(dfQ0 %*% coef_Q)
-  blip_true = PQ1 - PQ0
-  ATE0 = mean(blip_true)
-  BV0 = var(blip_true)
+  TE_true = PQ1 - PQ0
+  ATE0 = mean(TE_true)
+  VTE0 = var(TE_true)
   
   # we then tweak coefs to satisfy the user specs on true ATE
   jj = 1
-  while (abs(ATE0) <= minATE & jj <= 20) {
+  while (abs(ATE0) <= minATE0 & jj <= 20) {
     coef_Q[TXpos] = 1.2*coef_Q[TXpos]
     PQ1 = plogis(dfQ1 %*% coef_Q)
     PQ0 = plogis(dfQ0 %*% coef_Q)
-    blip_true = PQ1 - PQ0
-    ATE0 = mean(blip_true)
+    TE_true = PQ1 - PQ0
+    ATE0 = mean(TE_true)
     jj = jj + 1
   } 
   
-  # we then tweak coefs to satisfy the user specs on true blip var, BV0
+  # we then tweak coefs to satisfy the user specs on true TE var, BV0
   jj = 1 
   if (no.inters != 0) {
-    while (BV0 <= minBV & jj <= 20) {
+    while (VTE0 <= minVTE0 & jj <= 20) {
       coef_Q[(ncol(dfQWA) + 1):ncol(dfQ)] = 1.2 * coef_Q[(ncol(dfQWA) + 1):ncol(dfQ)]
       PQ1 = plogis(dfQ1 %*% coef_Q)
       PQ0 = plogis(dfQ0 %*% coef_Q)
-      blip_true = PQ1 - PQ0
-      BV0 = var(blip_true)
+      TE_true = PQ1 - PQ0
+      VTE0 = var(TE_true)
       jj = jj + 1
     } 
   } 
   
-  ATE0 = mean(blip_true)
+  ATE0 = mean(TE_true)
   # finally we create the population probs of death
   PQ = plogis(dfQ %*% coef_Q)
   # max(PQ)
@@ -388,7 +388,7 @@ get.dgp = function(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms, min
   # make sure our loglikelihood loss is bounded reasonably, no one gets super lucky or unlucky!
   # mean(Y*A/PG0-Y*(1-A)/(1-PG0))
   # ATE0
-  # take a sample of size n and return sample probs blips, the dataframe 
+  # take a sample of size n and return sample probs TEs, the dataframe 
   # with covariates but the user never sees the formula. Now they can use DF
   # to try and recover the truth
   S = sample(1:N, n)
@@ -396,14 +396,14 @@ get.dgp = function(n, d, pos = 0.01, minATE = 0, minBV = 0, depth, maxterms, min
   PQ0n = PQ0[S]
   PQn = PQ[S]
   PGn = PG0[S]
-  blip_n = PQ1n - PQ0n
+  TE_n = PQ1n - PQ0n
   An = A[S]
   Yn = Y[S]
   Wn = as.data.frame(U_W[S, ])
   DF = cbind(Wn, An, Yn)
   colnames(DF)[c((d + 1), (d + 2))] = c("A", "Y")
   colnames(DF)[1:d] = paste0("W",1:d)
-  return(list(BV0 = BV0, ATE0 = ATE0, DF = DF, blip_n = blip_n, 
+  return(list(VTE0 = VTE0, ATE0 = ATE0, DF = DF, TE_n = TE_n, 
               PQ1n = PQ1n, PQ0n = PQ0n, PQn = PQn, PGn = PGn, U_Wdist = U_Wdist,
               f_Aforms = f_Aforms, f_Yforms = f_Yforms, terms = terms, skewage = skewage, its = its,
             termsQW = termsQW, terms_inter = terms_inter, coef_Q = coef_Q, coef_G = coef_G,

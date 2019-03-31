@@ -15,7 +15,7 @@ remakeDGP(n, object, limit_inter = NULL)
 
 \item{minATE, }{minimum causal risk difference for the population.}
 
-\item{minBV, }{minimum blip variance for population}
+\item{minBV, }{minimum TE variance for population}
 
 \item{depth, }{specify depth of interaction--must be less than or equal d.}
 
@@ -41,8 +41,8 @@ default is c(-1, 1).  Set to c(-5,-1) to deliberately skew more regularly or wid
 c(-3, 3) to skew more randomly.}
 }
 \value{
-a sample DF, the true average treatment effect, ATE0 and blip variance
-BV0, the sample pscores, PGn, the sample true blips, blip_n, the sample
+a sample DF, the true average treatment effect, ATE0 and TE variance
+BV0, the sample pscores, PGn, the sample true TEs, TE_n, the sample
 true prob of death under treatment, PQ1n, and prob of death under control
 PQ0n
 }

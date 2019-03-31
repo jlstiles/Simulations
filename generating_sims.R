@@ -7,7 +7,7 @@ dgps1 = lapply(1:20, FUN = function(x) {
                 mininters = 3, num.binaries = 5, force.confounding = TRUE, N = 1e5)
   temp = remakeDGP(n=1e6, dgp)
   ATE0 = mean(temp$TE_n)
-  VTE0 = mean(temp$TE_n)
+  VTE0 = var(temp$TE_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 
@@ -20,7 +20,7 @@ dgps2 = lapply(1:20, FUN = function(x) {
                 mininters = 8, num.binaries = 5, force.confounding = TRUE, N = 1e5) 
   temp = remakeDGP(n=1e6, dgp)
   ATE0 = mean(temp$TE_n)
-  VTE0 = mean(temp$TE_n)
+  VTE0 = var(temp$TE_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 save(dgps2, file = "dgps2.RDATA")
@@ -32,7 +32,7 @@ dgps3 = lapply(1:20, FUN = function(x) {
                 mininters = 12, num.binaries = 5, force.confounding = TRUE, N = 1e5)   
   temp = remakeDGP(n=1e6, dgp)
   ATE0 = mean(temp$blip_n)
-  VTE0 = mean(temp$blip_n)
+  VTE0 = var(temp$blip_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 
@@ -45,7 +45,7 @@ dgps4 = lapply(1:20, FUN = function(x) {
                 mininters = 5, num.binaries = 20, force.confounding = TRUE, N = 1e5)  
   temp = remakeDGP(n=1e6, dgp)
   ATE0 = mean(temp$blip_n)
-  VTE0 = mean(temp$blip_n)
+  VTE0 = var(temp$blip_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 
@@ -58,7 +58,7 @@ dgps5 = lapply(1:20, FUN = function(x) {
                 mininters = 15, num.binaries = 20, force.confounding = TRUE, N = 1e5) 
   temp = remakeDGP(n=1e6, dgp)
   ATE0 = mean(temp$blip_n)
-  VTE0 = mean(temp$blip_n)
+  VTE0 = var(temp$blip_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 

@@ -11,6 +11,8 @@ dgps1 = lapply(1:20, FUN = function(x) {
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 
+lapply(dgps1, FUN = function(x) x$VTE0)
+
 save(dgps1, file = "dgps1.RDATA")
 rm(dgps1)
 # Low dimension and many covs that matter and more depth
@@ -31,8 +33,8 @@ dgps3 = lapply(1:20, FUN = function(x) {
   dgp = get.dgp(n = 500, d = 22, pos = 0.05, minATE0 = 0, minVTE0 = 0, depth = 2, maxterms = 22, minterms = 15, 
                 mininters = 12, num.binaries = 5, force.confounding = TRUE, N = 1e5)   
   temp = remakeDGP(n=1e6, dgp)
-  ATE0 = mean(temp$blip_n)
-  VTE0 = var(temp$blip_n)
+  ATE0 = mean(temp$TE_n)
+  VTE0 = var(temp$TE_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 
@@ -44,8 +46,8 @@ dgps4 = lapply(1:20, FUN = function(x) {
   dgp = get.dgp(n = 2000, d = 180, pos = 0.05, minATE0 = 0, minVTE0 = 0, depth = 2, maxterms = 10, minterms = 5, 
                 mininters = 5, num.binaries = 20, force.confounding = TRUE, N = 1e5)  
   temp = remakeDGP(n=1e6, dgp)
-  ATE0 = mean(temp$blip_n)
-  VTE0 = var(temp$blip_n)
+  ATE0 = mean(temp$TE_n)
+  VTE0 = var(temp$TE_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 
@@ -57,8 +59,8 @@ dgps5 = lapply(1:20, FUN = function(x) {
   dgp = get.dgp(n = 2000, d = 180, pos = 0.05, minATE0 = 0, minVTE0 = 0, depth = 2, maxterms = 40, minterms = 15, 
                 mininters = 15, num.binaries = 20, force.confounding = TRUE, N = 1e5) 
   temp = remakeDGP(n=1e6, dgp)
-  ATE0 = mean(temp$blip_n)
-  VTE0 = var(temp$blip_n)
+  ATE0 = mean(temp$TE_n)
+  VTE0 = var(temp$TE_n)
   return(return(list(dgp = dgp, ATE0 = ATE0, VTE0 = VTE0)))
 })
 
